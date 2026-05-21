@@ -166,7 +166,7 @@ function ThanksContent() {
         }),
       });
 
-      if (!res.ok) {
+      if (!res.ok && res.status !== 302) {
         throw new Error('Failed to send note');
       }
 
