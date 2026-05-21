@@ -5,6 +5,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL!;
 
+type FeedbackResponse = {
+  success?: boolean;
+  error?: string;
+  nextStep?: 'thanks' | 'confirm' | 'rate';
+  routedTo?: 'google' | 'inbox' | 'rate';
+  from?: string;
+  feedbackId?: string;
+};
+
 function makeIdempotencyKey({
   stars,
   comment,
@@ -88,7 +97,7 @@ function FourStarFeedbackContent() {
     }
 
     if (!comment.trim()) {
-      setError('Please tell us what happened before sending.');
+      setError('Please tell us what could have made the experience better.');
       return;
     }
 
@@ -111,44 +120,32 @@ function FourStarFeedbackContent() {
         body: JSON.stringify({
           stars: 4,
           comment,
-          contact,
-          optIn,
+          contact: contact || '',
+          optIn: contact && optIn ? true : false,
           locationId,
           ...(shortcode ? { shortcode } : {}),
           ...(v ? { v } : {}),
           ...(source ? { source } : {}),
         }),
-        redirect: 'follow',
       });
 
-      if (!response.ok) {
-        throw new Error('Feedback submission failed');
+      const data: FeedbackResponse = await response.json().catch(() => ({}));
+
+      if (!response.ok || data.success === false) {
+        throw new Error(data.error || 'Feedback submission failed');
       }
 
-      const finalUrl = response.url || '';
-      let backendFrom = '';
-
-      try {
-        backendFrom = new URL(finalUrl).searchParams.get('from') || '';
-      } catch {
-        backendFrom = '';
-      }
-
-      if (finalUrl.includes('/five-stars.html') || finalUrl.includes('/feedback/thanks')) {
-        router.push(
-          buildPath(
-            '/feedback/thanks',
-            backendFrom ? { from: backendFrom } : { from: 'positive_4star' },
-          ),
-        );
+      if (data.nextStep === 'confirm') {
+        router.push(buildPath('/feedback/confirm'));
         return;
       }
 
-      if (
-        finalUrl.includes('/low-star-confirmation.html') ||
-        finalUrl.includes('/feedback/confirm')
-      ) {
-        router.push(buildPath('/feedback/confirm'));
+      if (data.nextStep === 'thanks') {
+        router.push(
+          buildPath('/feedback/thanks', {
+            from: data.from || 'positive_4star',
+          }),
+        );
         return;
       }
 
@@ -178,23 +175,56 @@ function FourStarFeedbackContent() {
             className="hs-textarea"
           />
 
+          <label htmlFor="phone" className="hs-label">
+            Phone number
+          </label>
+
           <input
-            type="text"
+            id="phone"
+            name="contact"
+            type="tel"
             value={contact}
             onChange={(e) => setContact(e.target.value)}
-            placeholder="Email or phone (optional)"
+            placeholder="+1 313 555 0123"
             className="hs-input"
           />
 
-          <label htmlFor="consent" className="hs-checkbox">
+          <label htmlFor="sms-consent" className="hs-checkbox">
             <input
-              id="consent"
+              id="sms-consent"
+              name="consent"
               type="checkbox"
               checked={optIn}
               onChange={(e) => setOptIn(e.target.checked)}
             />
-            <span>Yes, you can reach out to me</span>
+            <span>
+              Yes, I agree to receive a one-time SMS from HappySay about my feedback and
+              experience. Standard message & data rates may apply. Reply <strong>STOP</strong>{' '}
+              to opt out. <strong>HELP</strong> for help.
+            </span>
           </label>
+
+          <p className="hs-terms">
+            By submitting, you agree to HappySay&apos;s{' '}
+            <a
+              href="https://gethappysay.com/privacy"
+              target="_blank"
+              rel="noreferrer"
+              className="hs-link"
+            >
+              Privacy Policy
+            </a>{' '}
+            and{' '}
+            <a
+              href="https://gethappysay.com/terms"
+              target="_blank"
+              rel="noreferrer"
+              className="hs-link"
+            >
+              Terms
+            </a>
+            .
+          </p>
 
           {error ? <div className="hs-error">{error}</div> : null}
 

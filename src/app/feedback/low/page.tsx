@@ -5,6 +5,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL!;
 
+type FeedbackResponse = {
+  success?: boolean;
+  error?: string;
+  nextStep?: 'thanks' | 'confirm' | 'rate';
+  routedTo?: 'google' | 'inbox' | 'rate';
+  from?: string;
+  feedbackId?: string;
+};
+
 function makeIdempotencyKey({
   stars,
   comment,
@@ -115,11 +124,12 @@ function LowStarFeedbackContent() {
           ...(v ? { v } : {}),
           ...(source ? { source } : {}),
         }),
-        redirect: 'manual',
       });
 
-      if (!response.ok && response.status !== 0 && response.status !== 302) {
-        throw new Error('Feedback submission failed');
+      const data: FeedbackResponse = await response.json().catch(() => ({}));
+
+      if (!response.ok || data.success === false) {
+        throw new Error(data.error || 'Feedback submission failed');
       }
 
       router.push(buildPath('/feedback/confirm'));

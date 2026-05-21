@@ -13,6 +13,15 @@ type LocationConfig = {
   googleReviewUrl?: string | null;
 };
 
+type FeedbackResponse = {
+  success?: boolean;
+  error?: string;
+  nextStep?: string;
+  routedTo?: string;
+  from?: string;
+  feedbackId?: string;
+};
+
 function fallbackReviewUrl() {
   return 'https://www.google.com/search?q=leave+a+review';
 }
@@ -166,8 +175,10 @@ function ThanksContent() {
         }),
       });
 
-      if (!res.ok && res.status !== 302) {
-        throw new Error('Failed to send note');
+      const data: FeedbackResponse = await res.json().catch(() => ({}));
+
+      if (!res.ok || data.success === false) {
+        throw new Error(data.error || 'Failed to send note');
       }
 
       setNote('');
