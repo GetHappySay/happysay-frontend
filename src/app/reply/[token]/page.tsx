@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL!;
 
@@ -23,6 +23,12 @@ type PublicThread = {
     createdAt: string;
   } | null;
   messages: Message[];
+};
+
+type ReplyThreadPageProps = {
+  params: Promise<{
+    token: string;
+  }>;
 };
 
 function formatTime(value?: string) {
@@ -68,8 +74,8 @@ function getClosedCopy(reason?: string) {
   };
 }
 
-export default function ReplyThreadPage({ params }: { params: { token: string } }) {
-  const { token } = params;
+export default function ReplyThreadPage({ params }: ReplyThreadPageProps) {
+  const { token } = use(params);
 
   const [thread, setThread] = useState<PublicThread | null>(null);
   const [available, setAvailable] = useState(true);
@@ -328,7 +334,11 @@ export default function ReplyThreadPage({ params }: { params: { token: string } 
                 Your message goes directly back to {thread.businessName}.
               </p>
 
-              {error && <div className="hs-error" style={{ marginBottom: '12px' }}>{error}</div>}
+              {error && (
+                <div className="hs-error" style={{ marginBottom: '12px' }}>
+                  {error}
+                </div>
+              )}
 
               {success && (
                 <div
@@ -377,9 +387,7 @@ export default function ReplyThreadPage({ params }: { params: { token: string } 
                   opacity: sending || !replyText.trim() ? 0.7 : 1,
                 }}
               >
-                <span className="hs-button-content">
-                  {sending ? 'Sending...' : 'Send reply'}
-                </span>
+                <span className="hs-button-content">{sending ? 'Sending...' : 'Send reply'}</span>
               </button>
             </section>
           </>

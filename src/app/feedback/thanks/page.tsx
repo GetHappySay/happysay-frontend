@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL!;
@@ -31,6 +31,25 @@ function makeIdempotencyKey({
 }
 
 export default function ThanksPage() {
+  return (
+    <Suspense fallback={<ThanksLoading />}>
+      <ThanksContent />
+    </Suspense>
+  );
+}
+
+function ThanksLoading() {
+  return (
+    <main className="hs-page">
+      <div className="hs-card">
+        <img src="/logo.svg" alt="HappySay Logo" className="hs-logo" />
+        <p className="hs-copy">Loading...</p>
+      </div>
+    </main>
+  );
+}
+
+function ThanksContent() {
   const searchParams = useSearchParams();
 
   const [reviewUrl, setReviewUrl] = useState(fallbackReviewUrl());
@@ -54,7 +73,9 @@ export default function ThanksPage() {
       }
 
       try {
-        const res = await fetch(`${API_BASE}/api/public/location/${encodeURIComponent(locationId)}`);
+        const res = await fetch(
+          `${API_BASE}/api/public/location/${encodeURIComponent(locationId)}`,
+        );
 
         if (!res.ok) {
           throw new Error('Failed to fetch location');

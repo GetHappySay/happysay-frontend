@@ -1,9 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function FeedbackRatePage() {
+  return (
+    <Suspense fallback={<FeedbackRateLoading />}>
+      <FeedbackRateContent />
+    </Suspense>
+  );
+}
+
+function FeedbackRateLoading() {
+  return (
+    <main className="hs-page">
+      <div className="hs-card">
+        <img src="/logo.svg" alt="HappySay Logo" className="hs-logo" />
+        <p className="hs-copy">Loading feedback form...</p>
+      </div>
+    </main>
+  );
+}
+
+function FeedbackRateContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [hoveredRating, setHoveredRating] = useState<number>(0);

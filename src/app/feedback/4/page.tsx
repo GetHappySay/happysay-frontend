@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL!;
@@ -22,6 +22,25 @@ function makeIdempotencyKey({
 }
 
 export default function FourStarFeedbackPage() {
+  return (
+    <Suspense fallback={<FeedbackLoading />}>
+      <FourStarFeedbackContent />
+    </Suspense>
+  );
+}
+
+function FeedbackLoading() {
+  return (
+    <main className="hs-page">
+      <div className="hs-card">
+        <img src="/logo.svg" alt="HappySay Logo" className="hs-logo" />
+        <p className="hs-copy">Loading feedback form...</p>
+      </div>
+    </main>
+  );
+}
+
+function FourStarFeedbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 

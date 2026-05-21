@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL!;
@@ -22,6 +22,25 @@ function makeIdempotencyKey({
 }
 
 export default function LowStarFeedbackPage() {
+  return (
+    <Suspense fallback={<LowStarLoading />}>
+      <LowStarFeedbackContent />
+    </Suspense>
+  );
+}
+
+function LowStarLoading() {
+  return (
+    <main className="hs-page">
+      <div className="hs-card">
+        <img src="/logo.svg" alt="HappySay Logo" className="hs-logo" />
+        <p className="hs-copy">Loading feedback form...</p>
+      </div>
+    </main>
+  );
+}
+
+function LowStarFeedbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -98,11 +117,11 @@ export default function LowStarFeedbackPage() {
         }),
         redirect: 'manual',
       });
-      
+
       if (!response.ok && response.status !== 0 && response.status !== 302) {
         throw new Error('Feedback submission failed');
       }
-      
+
       router.push(buildPath('/feedback/confirm'));
     } catch (err) {
       console.error('❌ Failed to submit feedback:', err);
